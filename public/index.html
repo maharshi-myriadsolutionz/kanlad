@@ -143,7 +143,9 @@
           `;
           board.appendChild(columnEl);
 
-          const tasks = boardData.tasks.filter((t) => t.status === col.id);
+          const tasks = boardData.tasks
+            .filter((t) => t.status === col.id)
+            .sort((a, b) => a.position - b.position);
           tasks.forEach((task) => addTaskToColumn(task, col.id));
 
           const input = columnEl.querySelector(`#newTask-${col.id}`);
@@ -163,8 +165,17 @@
             onEnd: async (evt) => {
               const items = [...evt.to.children];
               for (let i = 0; i < items.length; i++) {
-                const id = items[i].dataset.id;
-                const status = evt.to.dataset.col;
+                const id = parseInt(items[i].dataset.id);
+                const status = parseInt(evt.to.dataset.col);
+
+                // Update local boardData
+                const task = boardData.tasks.find((t) => t.id === id);
+                if (task) {
+                  task.status = status;
+                  task.position = i;
+                }
+
+                // Send update to server
                 await fetch("/tasks/move", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
